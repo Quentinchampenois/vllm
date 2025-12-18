@@ -36,3 +36,10 @@ class SpeechToTextConfig:
     @property
     def allow_audio_chunking(self) -> bool:
         return self.min_energy_split_window_size is not None
+
+    def compute_hash(self) -> str:
+        """Compute hash of the config for caching purposes."""
+        from vllm.config.utils import get_hash_factors, hash_factors
+
+        factors = get_hash_factors(self)
+        return hash_factors(factors)
