@@ -849,12 +849,20 @@ class WhisperForConditionalGeneration(
     def get_speech_to_text_config(
         cls, model_config: ModelConfig, task_type: str
     ) -> SpeechToTextConfig:
+        from vllm.config import get_current_vllm_config
+
         processor = cached_get_processor(model_config.model)
+
+        try:
+            vllm_config = get_current_vllm_config()
+            overlap_chunk_second = vllm_config.speech_to_text_config.overlap_chunk_second
+        except Exception:
+            overlap_chunk_second = SpeechToTextConfig.overlap_chunk_second
 
         return SpeechToTextConfig(
             max_audio_clip_s=processor.feature_extractor.chunk_length,
             sample_rate=processor.feature_extractor.sampling_rate,
-            overlap_chunk_second=model_config.audio_overlap_chunk_second,
+            overlap_chunk_second=overlap_chunk_second,
         )
 
     @classmethod
