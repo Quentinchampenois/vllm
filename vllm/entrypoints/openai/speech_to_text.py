@@ -71,9 +71,8 @@ class OpenAISpeechToText(OpenAIServing):
         self.default_sampling_params = self.model_config.get_diff_sampling_param()
         self.task_type = task_type
 
-        self.asr_config = self.model_cls.get_speech_to_text_config(
-            self.model_config, task_type
-        )
+        # Use SpeechToTextConfig from VllmConfig instead of lazily creating it
+        self.asr_config = engine_client.vllm_config.speech_to_text_config
 
         self.enable_force_include_usage = enable_force_include_usage
 
