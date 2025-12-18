@@ -51,6 +51,7 @@ from vllm.config import (
     PoolerConfig,
     SchedulerConfig,
     SpeculativeConfig,
+    SpeechToTextConfig,
     StructuredOutputsConfig,
     VllmConfig,
     get_attr_docs,
@@ -69,6 +70,7 @@ from vllm.config.model import (
     LogprobsMode,
     ModelDType,
     RunnerOption,
+    SpeechToTextConfig,
     TaskOption,
     TokenizerMode,
 )
@@ -501,6 +503,9 @@ class EngineArgs:
     structured_outputs_config: StructuredOutputsConfig = get_field(
         VllmConfig, "structured_outputs_config"
     )
+    speech_to_text_config: SpeechToTextConfig = get_field(
+        VllmConfig, "speech_to_text_config"
+    )
     reasoning_parser: str = StructuredOutputsConfig.reasoning_parser
     reasoning_parser_plugin: str | None = None
 
@@ -688,6 +693,17 @@ class EngineArgs:
         model_group.add_argument(
             "--audio-overlap-chunk-second", **model_kwargs["audio_overlap_chunk_second"]
         )
+
+        # Speech to text arguments
+        speech_to_text_kwargs = get_kwargs(SpeechToTextConfig)
+        speech_to_text_group = parser.add_argument_group(
+            title="SpeechToTextConfig",
+            description=SpeechToTextConfig.__doc__,
+        )
+        speech_to_text_group.add_argument("--sample-rate", **speech_to_text_kwargs["sample_rate"])
+        speech_to_text_group.add_argument("--max-audio-clip-s", **speech_to_text_kwargs["max_audio_clip_s"])
+        speech_to_text_group.add_argument("--overlap-chunk-second", **speech_to_text_kwargs["overlap_chunk_second"])
+        speech_to_text_group.add_argument("--min-energy-split-window-size", **speech_to_text_kwargs["min_energy_split_window_size"])
 
         # Model loading arguments
         load_kwargs = get_kwargs(LoadConfig)
@@ -1118,6 +1134,9 @@ class EngineArgs:
         )
         vllm_group.add_argument(
             "--structured-outputs-config", **vllm_kwargs["structured_outputs_config"]
+        )
+        vllm_group.add_argument(
+            "--speech-to-text-config", **vllm_kwargs["speech_to_text_config"]
         )
 
         # Other arguments
@@ -1751,6 +1770,7 @@ class EngineArgs:
             lora_config=lora_config,
             speculative_config=speculative_config,
             load_config=load_config,
+            speech_to_text_config=self.speech_to_text_config,
             structured_outputs_config=self.structured_outputs_config,
             observability_config=observability_config,
             compilation_config=compilation_config,

@@ -39,6 +39,7 @@ from .observability import ObservabilityConfig
 from .parallel import ParallelConfig
 from .scheduler import SchedulerConfig
 from .speculative import SpeculativeConfig
+from .speech_to_text import SpeechToTextConfig
 from .structured_outputs import StructuredOutputsConfig
 from .utils import SupportsHash, config
 
@@ -82,6 +83,10 @@ class VllmConfig:
     """LoRA configuration."""
     speculative_config: SpeculativeConfig | None = None
     """Speculative decoding configuration."""
+    speech_to_text_config: SpeechToTextConfig = Field(
+        default_factory=SpeechToTextConfig
+    )
+    """Speech to text configuration for audio models."""
     structured_outputs_config: StructuredOutputsConfig = Field(
         default_factory=StructuredOutputsConfig
     )
@@ -170,6 +175,10 @@ class VllmConfig:
             vllm_factors.append("None")
         if self.speculative_config:
             vllm_factors.append(self.speculative_config.compute_hash())
+        else:
+            vllm_factors.append("None")
+        if self.speech_to_text_config:
+            vllm_factors.append(self.speech_to_text_config.compute_hash())
         else:
             vllm_factors.append("None")
         if self.structured_outputs_config:
