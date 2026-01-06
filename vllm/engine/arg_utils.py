@@ -53,6 +53,7 @@ from vllm.config import (
     ProfilerConfig,
     SchedulerConfig,
     SpeculativeConfig,
+    SpeechToTextConfig,
     StructuredOutputsConfig,
     VllmConfig,
     get_attr_docs,
@@ -475,7 +476,6 @@ class EngineArgs:
     io_processor_plugin: str | None = None
     skip_mm_profiling: bool = MultiModalConfig.skip_mm_profiling
     video_pruning_rate: float = MultiModalConfig.video_pruning_rate
-    audio_overlap_chunk_second: int = ModelConfig.audio_overlap_chunk_second
     # LoRA fields
     enable_lora: bool = False
     max_loras: int = LoRAConfig.max_loras
@@ -500,6 +500,9 @@ class EngineArgs:
 
     structured_outputs_config: StructuredOutputsConfig = get_field(
         VllmConfig, "structured_outputs_config"
+    )
+    speech_to_text_config: SpeechToTextConfig = get_field(
+        VllmConfig, "speech_to_text_config"
     )
     reasoning_parser: str = StructuredOutputsConfig.reasoning_parser
     reasoning_parser_plugin: str | None = None
@@ -701,9 +704,17 @@ class EngineArgs:
         model_group.add_argument(
             "--io-processor-plugin", **model_kwargs["io_processor_plugin"]
         )
-        model_group.add_argument(
-            "--audio-overlap-chunk-second", **model_kwargs["audio_overlap_chunk_second"]
+
+        # Speech to text arguments
+        speech_to_text_kwargs = get_kwargs(SpeechToTextConfig)
+        speech_to_text_group = parser.add_argument_group(
+            title="SpeechToTextConfig",
+            description=SpeechToTextConfig.__doc__,
         )
+        speech_to_text_group.add_argument("--sample-rate", **speech_to_text_kwargs["sample_rate"])
+        speech_to_text_group.add_argument("--max-audio-clip-s", **speech_to_text_kwargs["max_audio_clip_s"])
+        speech_to_text_group.add_argument("--overlap-chunk-second", **speech_to_text_kwargs["overlap_chunk_second"])
+        speech_to_text_group.add_argument("--min-energy-split-window-size", **speech_to_text_kwargs["min_energy_split_window_size"])
 
         # Model loading arguments
         load_kwargs = get_kwargs(LoadConfig)
@@ -1168,6 +1179,9 @@ class EngineArgs:
         vllm_group.add_argument(
             "--optimization-level", **vllm_kwargs["optimization_level"]
         )
+        vllm_group.add_argument(
+            "--speech-to-text-config", **vllm_kwargs["speech_to_text_config"]
+        )
 
         # Other arguments
         parser.add_argument(
@@ -1257,7 +1271,6 @@ class EngineArgs:
             logits_processors=self.logits_processors,
             video_pruning_rate=self.video_pruning_rate,
             io_processor_plugin=self.io_processor_plugin,
-            audio_overlap_chunk_second=self.audio_overlap_chunk_second,
         )
 
     def validate_tensorizer_args(self):
@@ -1752,6 +1765,7 @@ class EngineArgs:
             attention_config=attention_config,
             lora_config=lora_config,
             speculative_config=speculative_config,
+            speech_to_text_config=self.speech_to_text_config,
             structured_outputs_config=self.structured_outputs_config,
             observability_config=observability_config,
             compilation_config=compilation_config,
